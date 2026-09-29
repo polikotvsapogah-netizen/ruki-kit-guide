@@ -1,0 +1,962 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Кит рук: путеводитель для админа</title>
+<style>
+:root {
+  color-scheme: light;
+  --bg: #f6f3ec;
+  --surface: #fffdf8;
+  --surface-2: #efe9dd;
+  --text: #1d1b17;
+  --muted: #5f5a50;
+  --line: #ddd4c4;
+  --accent: #1f6358;
+  --accent-soft: #e1eee8;
+  --mark: #95580e;
+  --node: #fffdf8;
+  --node-line: #b3a893;
+  --code-bg: #ece5d7;
+  --warn-bg: #fdecea;
+  --warn-line: #c62828;
+  --warn-text: #8e1b1b;
+  --serif: "Iowan Old Style", "PT Serif", "Palatino Linotype", Palatino, Georgia, serif;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #141311;
+    --surface: #1c1b18;
+    --surface-2: #25231f;
+    --text: #ebe6db;
+    --muted: #a8a193;
+    --line: #37342e;
+    --accent: #6cc4b3;
+    --accent-soft: #19302b;
+    --mark: #e3a64c;
+    --node: #1f1e1a;
+    --node-line: #5a544b;
+    --code-bg: #29271f;
+    --warn-bg: #3b1517;
+    --warn-line: #ef5350;
+    --warn-text: #ffb4ab;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #141311;
+  --surface: #1c1b18;
+  --surface-2: #25231f;
+  --text: #ebe6db;
+  --muted: #a8a193;
+  --line: #37342e;
+  --accent: #6cc4b3;
+  --accent-soft: #19302b;
+  --mark: #e3a64c;
+  --node: #1f1e1a;
+  --node-line: #5a544b;
+  --code-bg: #29271f;
+  --warn-bg: #3b1517;
+  --warn-line: #ef5350;
+  --warn-text: #ffb4ab;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 17px;
+  line-height: 1.6;
+  overflow-wrap: break-word;
+}
+.page { max-width: 760px; margin: 0 auto; padding: 32px 16px 64px; }
+h1, h2, h3 { font-family: var(--serif); font-weight: 600; line-height: 1.2; text-wrap: balance; }
+h1 { font-size: clamp(2rem, 1.35rem + 2.6vw, 2.85rem); letter-spacing: -0.01em; margin: 8px 0 14px; }
+h2 { font-size: clamp(1.6rem, 1.3rem + 1.1vw, 2rem); margin: 0 0 12px; }
+h3 { font-size: 1.22rem; margin: 36px 0 10px; }
+p, ul, ol, dl, pre { margin: 0 0 14px; }
+ul, ol { padding-left: 1.4em; }
+li { margin: 6px 0; }
+li::marker { color: var(--muted); }
+a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+a:hover { text-decoration-thickness: 2px; }
+a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
+strong { font-weight: 650; }
+main p, main li, main dd { max-width: 64ch; }
+code, pre { font-family: var(--mono); font-size: 0.86em; }
+code { background: var(--code-bg); border-radius: 5px; padding: 0.1em 0.35em; overflow-wrap: anywhere; }
+pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.5; }
+pre code { background: none; padding: 0; font-size: 1em; }
+
+.masthead { padding: 8px 0 24px; }
+.kicker { margin: 0; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--mark); }
+.dek { font-size: 1.14rem; color: var(--muted); max-width: 40em; margin: 0 0 18px; }
+.meta { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; font-size: 0.84rem; color: var(--muted); }
+.meta li { margin: 0; padding: 2px 10px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); font-variant-numeric: tabular-nums; }
+
+.warn-windows {
+  border: 1px solid var(--warn-line);
+  border-left-width: 5px;
+  background: var(--warn-bg);
+  color: var(--warn-text);
+  border-radius: 10px;
+  padding: 14px 18px;
+  margin: 0 0 20px;
+}
+.warn-windows strong, .warn-windows a { color: var(--warn-line); }
+.warn-windows code { background: transparent; border: 1px solid currentColor; }
+.warn-windows > :last-child { margin-bottom: 0; }
+
+nav.toc { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px 10px; margin: 0 0 8px; }
+nav.toc h2 { font-family: var(--sans); font-size: 0.78rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin: 0 0 6px; }
+.toc ol { list-style: none; margin: 0; padding: 0; counter-reset: toc; display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); column-gap: 24px; }
+.toc li { counter-increment: toc; display: grid; grid-template-columns: 1.9em minmax(0, 1fr); margin: 0; }
+.toc li::before { content: counter(toc); color: var(--mark); font-weight: 700; font-variant-numeric: tabular-nums; padding-top: 6px; }
+.toc a { color: var(--text); font-weight: 600; text-decoration: none; padding-top: 6px; }
+.toc a:hover { color: var(--accent); }
+.toc-note { grid-column: 2; font-size: 0.84rem; line-height: 1.35; color: var(--muted); padding-bottom: 6px; }
+
+section { margin-top: 48px; padding-top: 44px; border-top: 1px solid var(--line); scroll-margin-top: 12px; }
+
+.modules { margin-top: 0; padding-top: 4px; border-top: 0; }
+.modules h2 { margin-bottom: 6px; }
+.mod-grid { list-style: none; margin: 18px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 14px; }
+.mod-grid > li { margin: 0; display: flex; }
+a.mod {
+  display: flex; flex-direction: column; gap: 10px; width: 100%;
+  padding: 18px 20px 16px; border-radius: 14px;
+  background: var(--surface); border: 1px solid var(--line);
+  color: var(--text); text-decoration: none;
+}
+a.mod:hover { border-color: var(--accent); box-shadow: 0 6px 20px -12px rgba(31, 99, 88, 0.55); }
+a.mod:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.mod-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.mod-name { font-family: var(--serif); font-size: 1.38rem; font-weight: 600; line-height: 1.15; }
+.mod-go { flex: none; font-size: 0.8rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); white-space: nowrap; }
+.mod-cmd { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; }
+.mod-cmd code { background: var(--accent-soft); color: var(--accent); border: 1px solid transparent; font-weight: 600; }
+.mod-cmd .or { font-size: 0.82rem; color: var(--muted); align-self: center; }
+.mod dl { margin: 0; display: grid; gap: 6px; }
+.mod dt { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--mark); }
+.mod dd { margin: 0 0 4px; font-size: 0.97rem; line-height: 1.5; }
+ol.flow { list-style: none; margin: 2px 0 0; padding: 12px 0 0 0; border-top: 1px dashed var(--line); display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: center; }
+ol.flow li { position: relative; margin: 0; font-size: 0.84rem; line-height: 1.3; padding: 3px 9px; border-radius: 999px; background: var(--surface-2); color: var(--text); }
+ol.flow li + li::before { content: "›"; position: absolute; left: -11px; top: 50%; transform: translateY(-52%); color: var(--muted); font-weight: 700; }
+ol.flow li.loop { background: transparent; color: var(--muted); padding-left: 0; font-style: italic; }
+.mod-more { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0 0; padding: 0; list-style: none; font-size: 0.9rem; }
+.mod-more li { margin: 0; }
+.mod-more a { display: inline-block; padding: 5px 12px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); text-decoration: none; color: var(--text); }
+.mod-more a:hover { border-color: var(--accent); color: var(--accent); }
+.mod-more code { background: none; padding: 0; }
+@media (prefers-reduced-motion: no-preference) {
+  a.mod { transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease; }
+  a.mod:hover { transform: translateY(-2px); }
+}
+.lead { font-size: 1.1rem; color: var(--muted); }
+h3[id] { scroll-margin-top: 16px; }
+
+.cards { list-style: none; padding: 0; margin: 0 0 16px; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+.cards li { margin: 0; padding: 14px 16px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
+.cards .card-title { display: block; font-family: var(--serif); font-size: 1.12rem; font-weight: 600; text-decoration: none; margin-bottom: 4px; }
+.cards p { margin: 0; font-size: 0.95rem; color: var(--muted); }
+.stuck { display: grid; gap: 12px; margin: 0 0 16px; }
+.stuck > div { margin: 0; }
+.stuck .card { padding: 14px 18px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+.stuck .card > :last-child { margin-bottom: 0; }
+
+ol.steps { list-style: none; padding: 0; margin: 0 0 16px; counter-reset: step; }
+ol.steps > li { counter-increment: step; position: relative; margin: 0; padding: 3px 0 18px 50px; }
+ol.steps > li::before {
+  content: counter(step);
+  position: absolute; left: 0; top: 0;
+  width: 34px; height: 34px; border-radius: 50%;
+  display: grid; place-items: center;
+  border: 1.5px solid var(--accent); background: var(--surface); color: var(--accent);
+  font-weight: 700; font-variant-numeric: tabular-nums;
+}
+ol.steps > li::after { content: ""; position: absolute; left: 17px; top: 40px; bottom: 4px; border-left: 1.5px dashed var(--node-line); }
+ol.steps > li:last-child::after { display: none; }
+.step-title { display: block; font-weight: 650; }
+
+.note { border-left: 4px solid var(--accent); background: var(--accent-soft); padding: 12px 16px; border-radius: 0 10px 10px 0; margin: 16px 0; }
+.pill { display: inline-block; padding: 0 9px; border-radius: 999px; border: 1px solid var(--line); font-size: 0.8rem; font-weight: 700; white-space: nowrap; }
+.pill.req { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+.pill.opt { color: var(--muted); }
+
+.table-wrap { overflow-x: auto; margin: 0 0 16px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 0.92rem; line-height: 1.45; }
+th, td { padding: 9px 12px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); }
+tbody tr:last-child td { border-bottom: 0; }
+th { background: var(--surface-2); color: var(--muted); font-size: 0.76rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+.swipe { display: none; font-size: 0.84rem; color: var(--muted); margin: 0 0 8px; }
+
+dl.cmds dt { margin-top: 10px; }
+dl.cmds dd { margin: 2px 0 0 1.2em; }
+
+figure { margin: 20px 0 24px; padding: 20px 12px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
+svg.diagram { display: block; width: 100%; max-width: 440px; height: auto; margin: 0 auto; color: var(--text); font-family: var(--sans); }
+figcaption { max-width: 52ch; margin: 12px auto 0; font-size: 0.88rem; color: var(--muted); text-align: center; }
+
+dl.glossary { margin: 0 0 16px; border-top: 1px solid var(--line); }
+dl.glossary dt { font-family: var(--serif); font-size: 1.08rem; font-weight: 600; padding-top: 12px; }
+dl.glossary dd { margin: 2px 0 0; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+
+ol.lessons { list-style: none; padding: 0; margin: 0 0 16px; counter-reset: lesson; }
+ol.lessons > li { counter-increment: lesson; position: relative; margin: 0; padding: 14px 0 14px 46px; border-top: 1px solid var(--line); }
+ol.lessons > li::before { content: counter(lesson); position: absolute; left: 0; top: 12px; width: 1.6em; text-align: right; font-family: var(--serif); font-size: 1.3rem; color: var(--mark); font-variant-numeric: tabular-nums; }
+ol.lessons strong, ol.lessons .why, ol.lessons .fix { display: block; }
+ol.lessons .why { color: var(--muted); }
+
+footer { margin-top: 56px; padding-top: 20px; border-top: 1px solid var(--line); color: var(--muted); font-size: 0.88rem; }
+
+@media (max-width: 640px) {
+  figure { padding: 16px 4px 12px; }
+  .swipe { display: block; }
+  .wide table { min-width: 34rem; }
+  table.stack thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  table.stack, table.stack tbody, table.stack tr, table.stack td { display: block; width: 100%; }
+  table.stack tr { padding: 10px 14px; border-bottom: 1px solid var(--line); }
+  table.stack tbody tr:last-child { border-bottom: 0; }
+  table.stack td { border: 0; padding: 2px 0; }
+  table.stack td:first-child { font-weight: 650; }
+  table.stack td[data-label]::before { content: attr(data-label); margin-right: 0.5em; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+  table.tools tr { position: relative; }
+  table.tools td:nth-child(1) { padding-right: 7.5rem; }
+  table.tools td:nth-child(2) { position: absolute; top: 10px; right: 14px; width: auto; }
+  table.tools td[data-label]::before { content: none; }
+}
+@media (min-width: 641px) {
+  td:first-child code { white-space: nowrap; overflow-wrap: normal; }
+}
+@media (min-width: 720px) {
+  dl.glossary { display: grid; grid-template-columns: 12rem minmax(0, 1fr); column-gap: 24px; }
+  dl.glossary dt, dl.glossary dd { margin: 0; padding: 12px 0; border-bottom: 1px solid var(--line); }
+}
+@media (min-width: 1100px) {
+  .page {
+    max-width: 1060px;
+    padding: 48px 40px 80px;
+    display: grid;
+    grid-template-columns: 210px minmax(0, 1fr);
+    column-gap: 56px;
+    grid-template-areas: "toc head" "toc warn" "toc main" "toc foot";
+  }
+  .masthead { grid-area: head; }
+  .page > .warn-windows { grid-area: warn; }
+  nav.toc { grid-area: toc; align-self: start; position: sticky; top: 32px; max-height: calc(100vh - 64px); overflow-y: auto; margin: 0; padding: 4px 0 0; background: none; border: 0; border-radius: 0; }
+  .toc ol { display: block; }
+  .toc a { font-weight: 500; font-size: 0.95rem; color: var(--muted); padding: 5px 0; }
+  .toc li::before { padding-top: 5px; }
+  .toc-note { display: none; }
+  main { grid-area: main; }
+  footer { grid-area: foot; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  html { scroll-behavior: smooth; }
+  .toc a, a { transition: color 0.15s ease, text-decoration-thickness 0.15s ease; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
+}
+@media print {
+  nav.toc { display: none; }
+  body { background: #fff; color: #000; }
+  section { break-inside: avoid-page; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+<header class="masthead">
+<p class="kicker">Кит рук · путеводитель для админа</p>
+<h1>Кит рук: как всё устроено и с чего начать</h1>
+<p class="dek">Кит ставит на вашу машину конвейер рук, goodRun и механизм контекста. Здесь разложено, как это работает, какие есть скиллы, где можно встрять и что делать при сбое.</p>
+<ul class="meta" aria-label="Сборка страницы">
+<li>версия 0.1.2</li>
+<li>канон 493e475</li>
+<li>экспорт 2026-09-29</li>
+</ul>
+</header>
+<div class="warn-windows" role="note">
+<p><strong>Windows: сборка требует отладки.</strong> Под Windows кит работает только через WSL2, и живого прогона под Windows ещё не было. Первая волна скорее всего упадёт на одном из <a href="#win-debug">пунктов отладки</a>.</p>
+</div>
+
+<nav class="toc" aria-label="Оглавление">
+<h2>Оглавление</h2>
+<ol>
+<li><a href="#s1">Что это и для кого</a><span class="toc-note">где можно встрять, с чего начать</span></li>
+<li><a href="#s2">Сборка</a><span class="toc-note">инструменты, подписки и входы</span></li>
+<li><a href="#s3">Установка</a><span class="toc-note">права ролей, плагин, диалог setup</span></li>
+<li><a href="#s4">Роли и модели</a><span class="toc-note">кто пишет код и кто проверяет</span></li>
+<li><a href="#s5">Цикл волны рук</a><span class="toc-note">от конверта до живого DoD</span></li>
+<li><a href="#s6">goodRun</a><span class="toc-note">цепочка после грилинга</span></li>
+<li><a href="#s7">Контекст и чекпоинт</a><span class="toc-note">ступени, самосжатие, автоперенос</span></li>
+<li><a href="#s8">Конвейер Матта Покока</a><span class="toc-note">скиллы кита и когда их звать</span></li>
+<li><a href="#s9">Словарь</a><span class="toc-note">термины кита</span></li>
+<li><a href="#s10">Сбои и как их читать</a><span class="toc-note">журналы и уроки</span></li>
+</ol>
+</nav>
+
+<main>
+<section id="modules" class="modules" aria-labelledby="modules-h">
+<h2 id="modules-h">Четыре модуля кита</h2>
+<p class="lead">Каждый модуль снимает с вас свою рутину. Нажмите на модуль, чтобы перейти к подробному разделу.</p>
+<ul class="mod-grid">
+<li><a class="mod" href="#self-compact">
+<span class="mod-head"><span class="mod-name">Автосжатие</span><span class="mod-go">раздел 7</span></span>
+<p class="mod-cmd"><span class="or">запускается само; разрешение сжатия:</span><code>compact-ready</code></p>
+<dl>
+<dt>Зачем</dt><dd>Длинная сессия не упирается в окно модели и после сжатия помнит, на чём остановилась.</dd>
+<dt>Что облегчает</dt><dd>Не нужно следить за контекстом и пересказывать задачу заново: адреса работы возвращаются сами.</dd>
+</dl>
+<ol class="flow" aria-label="Цикл автосжатия">
+<li>контекст растёт</li><li>ступень: дойди до точки</li><li>чекпоинт в файл</li><li>сжатие</li><li>адреса назад</li><li class="loop">и снова по кругу</li>
+</ol>
+</a></li>
+<li><a class="mod" href="#word-checkpoint">
+<span class="mod-head"><span class="mod-name">Чекпоинт</span><span class="mod-go">раздел 7</span></span>
+<p class="mod-cmd"><code>чекпоинт</code><span class="or">или</span><code>/ruki:checkpoint</code></p>
+<dl>
+<dt>Зачем</dt><dd>Перенести работу в новое окно без потерь, когда сессия устала или пора сменить модель.</dd>
+<dt>Что облегчает</dt><dd>Не надо писать вручную, что сделано и что дальше: новая сессия сама подхватывает хэндофф.</dd>
+</dl>
+<ol class="flow" aria-label="Цикл чекпоинта">
+<li>работа доставлена</li><li>хэндофф</li><li>запись в Issue</li><li>промпт продолжения</li><li>новое окно: «Продолжаем чекпоинт»</li>
+</ol>
+</a></li>
+<li><a class="mod" href="#s5">
+<span class="mod-head"><span class="mod-name">Волна рук</span><span class="mod-go">раздел 5</span></span>
+<p class="mod-cmd"><code>/ruki:fable-ruki-agenty</code><span class="or">запасной:</span><code>/ruki:opus-ruki-agenty</code></p>
+<dl>
+<dt>Зачем</dt><dd>Отдать готовые тикеты нескольким моделям сразу и принять результат по проверкам, а не на глаз.</dd>
+<dt>Что облегчает</dt><dd>Координатор сам пишет задания рукам, следит за ними, гоняет ревью и тесты, вливает и закрывает тикеты. Вы ставите задачу и принимаете итог.</dd>
+</dl>
+<ol class="flow" aria-label="Цикл волны рук">
+<li>тикеты</li><li>конверт</li><li>рука в worktree</li><li>кандидат</li><li>ревью</li><li>гейт</li><li>мерж</li><li>живой DoD</li>
+</ol>
+</a></li>
+<li><a class="mod" href="#s6">
+<span class="mod-head"><span class="mod-name">goodRun</span><span class="mod-go">раздел 6</span></span>
+<p class="mod-cmd"><code>/ruki:goodrun</code><span class="or">из Codex:</span><code>$goodrun</code></p>
+<dl>
+<dt>Зачем</dt><dd>После обсуждения задачи довести её до тикетов и готового кода одной цепочкой.</dd>
+<dt>Что облегчает</dt><dd>Не надо копировать диалог между вкладками и моделями: ревью, спека, тикеты, волна и итоговая таблица идут друг за другом сами.</dd>
+</dl>
+<ol class="flow" aria-label="Цикл goodRun">
+<li>грилинг</li><li>ревью Astra</li><li>спека и тикеты</li><li>волна рук</li><li>итог</li>
+</ol>
+</a></li>
+</ul>
+<ul class="mod-more" aria-label="Другие команды кита">
+<li><a href="#setup-check"><code>/ruki:setup</code> проверка сборки</a></li>
+<li><a href="#s8"><code>/ruki:token-cost</code> цена сессии</a></li>
+<li><a href="#s8">какой скилл на какую задачу</a></li>
+<li><a href="#start">с чего начать</a></li>
+</ul>
+</section>
+
+<section id="s1">
+<h2>1. Что это и для кого</h2>
+<p class="lead">Кит рук ставит на вашу машину сборку, на которой работает конвейер рук. Кит доставляет сборку, а работает сама сборка: Orca, Claude Code, Codex, omp, скиллы Матта Покока, скиллы Orca и скиллы кита.</p>
+<p><strong>Рука</strong> (синоним: воркер) это отдельная сессия модели. Рука исполняет один тикет в своём worktree по конверту и сдаёт координатору кандидата. <strong>Координатор</strong> ведёт волну: выбирает процесс, раздаёт тикеты рукам, принимает кандидата, вливает его и закрывает тикеты.</p>
+<p>Для кого: для админа, который ведёт работу тикетами в GitHub и хочет отдавать код тикетов рукам параллельно, с ревью, гейтом и живой проверкой после мержа.</p>
+
+<h3>Что даёт сборка</h3>
+<ul class="cards">
+<li><a class="card-title" href="#s5">Конвейер рук</a><p>Волна рук по тикетам на полосах opus, astra и glm: конверт, кандидат, ревью, гейт, мерж.</p></li>
+<li><a class="card-title" href="#s6">goodRun</a><p>Цепочка от конца грилинга до итоговой таблицы без ручных пересадок между вкладками.</p></li>
+<li><a class="card-title" href="#s7">Механизм контекста</a><p>Ступени контекста, самосжатие, хуки сжатия, чекпоинт по слову и автоперенос.</p></li>
+<li><a class="card-title" href="#s8">Скиллы и конвейер</a><p>Команды кита и порядок конвейера Матта Покока: какой скилл на какую задачу.</p></li>
+</ul>
+
+<h3 id="stuck">Где можно встрять</h3>
+<div class="stuck">
+<div class="warn-windows" role="note">
+<p><strong>Сборка под Windows не проверена.</strong> Три звена под Windows остаются гипотезами спеки: Orca на Windows открывает вкладки в WSL2, <code>wslpath</code> переводит путь worktree из ответа Orca, надзор снимает всех потомков руки внутри WSL. Первая волна под Windows скорее всего упадёт на одном из пунктов отладки. Логи этой волны приложите к тикету отладки, который завёл владелец кита.</p>
+</div>
+<div class="card">
+<p><strong>Нужны свои подписки и входы.</strong> Кит их не даёт. Обязательны Claude Code с входом, <code>gh</code> с входом для трекера и Orca для вкладок. Codex и omp необязательны: без них полосы astra и glm выключены.</p>
+</div>
+<div class="card">
+<p><strong>Скиллы ставятся из сети.</strong> Скиллы Матта Покока и скиллы Orca <code>/ruki:setup</code> берёт свежими из репо авторов через <code>npx</code>. Без сети эти пункты не встанут.</p>
+</div>
+</div>
+
+<h3 id="start">С чего начать</h3>
+<ol class="steps">
+<li><span class="step-title">Инструменты и входы</span>Поставьте Claude Code, <code>gh</code>, Orca, по желанию Codex и omp, и войдите в каждый. Под Windows ставьте их внутри WSL2: <a href="#s2">раздел 2</a>.</li>
+<li><span class="step-title">Плагин</span>Прочитайте <a href="#rights">права ролей</a>. Затем выполните <code>claude plugin marketplace add &lt;орг&gt;/ruki-kit</code> и <code>claude plugin install ruki@ruki-kit</code>.</li>
+<li><span class="step-title">Проверка сборки</span>Наберите <code>/ruki:setup</code> в сессии Claude Code и отвечайте y или N по строкам отчёта <code>check</code>: <a href="#setup-check">как читать отчёт</a>.</li>
+<li><span class="step-title">Конфиг получателя</span>Назовите setup штаб, владельца GitHub и трекер: setup запишет их командой <code>ruki-setup install config KEY=value ...</code>. Команду тестов гейта <code>FR_GATE_CMD</code> допишите в конфиг сами: <a href="#config">ключи конфига</a>.</li>
+<li><span class="step-title">Проверочная волна</span>Наберите <code>/ruki:fable-ruki-agenty</code> с одним тикетом. Под Windows это отладочная волна: <a href="#win-debug">что приложить к тикету отладки</a>.</li>
+</ol>
+</section>
+
+<section id="s2">
+<h2>2. Сборка</h2>
+<p class="lead">Сборка: набор инструментов и скиллов, с которым работает кит. Команда <code>/ruki:setup</code> сверяет машину с этой таблицей и по каждому недостающему пункту печатает команду установки.</p>
+<div class="table-wrap">
+<table class="stack tools">
+<thead><tr><th scope="col">Пункт</th><th scope="col">Нужен</th><th scope="col">Что даёт</th></tr></thead>
+<tbody>
+<tr><td>git</td><td data-label="Нужен"><span class="pill req">обязательно</span></td><td data-label="Что даёт">worktree рук, ветки, мерж</td></tr>
+<tr><td><code>gh</code> с входом</td><td data-label="Нужен"><span class="pill req">обязательно</span></td><td data-label="Что даёт">Issues, лейблы, доска</td></tr>
+<tr><td>python3 не ниже 3.10</td><td data-label="Нужен"><span class="pill req">обязательно</span></td><td data-label="Что даёт">скрипты кита и хуки</td></tr>
+<tr><td>zsh</td><td data-label="Нужен"><span class="pill req">обязательно</span></td><td data-label="Что даёт">обвязка конвейера рук</td></tr>
+<tr><td>node и npx</td><td data-label="Нужен"><span class="pill req">обязательно</span></td><td data-label="Что даёт">установка скиллов Матта Покока и Orca</td></tr>
+<tr><td>Claude Code с входом</td><td data-label="Нужен"><span class="pill req">обязательно</span></td><td data-label="Что даёт">координатор, полоса opus, хуки контекста, вкладки goodRun ④ и ⑤</td></tr>
+<tr><td>Orca и её CLI</td><td data-label="Нужен"><span class="pill req">обязательно</span></td><td data-label="Что даёт">worktree рук, вкладки рук, goodRun и автопереноса</td></tr>
+<tr><td>Codex с входом</td><td data-label="Нужен"><span class="pill opt">по желанию</span></td><td data-label="Что даёт">полоса astra, ревьюер Astra, стадия ③ goodRun, вход <code>$goodrun</code> из Codex</td></tr>
+<tr><td>omp с профилем GLM</td><td data-label="Нужен"><span class="pill opt">по желанию</span></td><td data-label="Что даёт">полоса glm</td></tr>
+<tr><td>скиллы Матта Покока</td><td data-label="Нужен"><span class="pill req">обязательно</span></td><td data-label="Что даёт">грилинг, <code>/to-spec</code>, <code>/to-tickets</code>, <code>/tdd</code>, <code>/diagnosing-bugs</code> и другие имена из текстов кита</td></tr>
+<tr><td>скиллы Orca</td><td data-label="Нужен"><span class="pill req">обязательно</span></td><td data-label="Что даёт"><code>orca-cli</code> и <code>orchestration</code>: команды Orca в текстах координатора</td></tr>
+<tr><td>пин автосжатия</td><td data-label="Нужен"><span class="pill req">обязательно</span></td><td data-label="Что даёт">окно автосжатия для новой сессии <code>claude</code>: <a href="#s7">раздел 7</a></td></tr>
+<tr><td>конфиг получателя</td><td data-label="Нужен"><span class="pill req">обязательно</span></td><td data-label="Что даёт">штаб, владелец GitHub, трекер, доска и программа алерта: <a href="#config">раздел 3</a></td></tr>
+</tbody>
+</table>
+</div>
+<p>Без Codex или omp соответствующая полоса выключена, и волна идёт на полосе opus. Доступ подписки к моделям <code>check</code> не проверяет: его проверяет первый запуск полосы opus.</p>
+</section>
+
+<section id="s3">
+<h2>3. Установка</h2>
+<p class="lead">Установка идёт в три шага: права ролей, две команды плагина и диалог <code>/ruki:setup</code>.</p>
+<div class="warn-windows" role="note" id="win-debug">
+<p><strong>Windows: сборка требует отладки.</strong> Кит живёт в Claude Code внутри WSL2. Orca на Windows открывает вкладки в WSL, штаб и репо рук лежат в файловой системе WSL. Фразы «работает под Windows» без живого прогона нет.</p>
+<p>Пункты отладки для админа:</p>
+<ul>
+<li>Orca создаёт worktree рук в WSL и возвращает путь; <code>wave-launch.sh</code> читает путь из ответа и путь Windows переводит через <code>wslpath</code>;</li>
+<li>вкладки goodRun и автопереноса открываются в WSL;</li>
+<li>надзор снимает руку по потолку времени и убирает всех её потомков;</li>
+<li>хуки контекста пишут state-файлы;</li>
+<li>пин автосжатия действует в новой сессии.</li>
+</ul>
+<p>Проверочную волну запускайте через <code>wave-launch.sh</code>, а не ручным <code>git worktree add</code>. К тикету отладки приложите вывод <code>ruki-setup check</code>, журналы событий попыток рук и лог гейта первой волны.</p>
+</div>
+
+<h3 id="rights">Права ролей: прочитайте до установки</h3>
+<ul>
+<li>рука opus: <code>claude -p --dangerously-skip-permissions</code> из worktree руки;</li>
+<li>рука astra: <code>codex exec --sandbox workspace-write</code> с записью в worktree, его git-каталоги и <code>FR_STATE</code>;</li>
+<li>рука glm: <code>omp -p</code> с набором инструментов и <code>--add-dir</code> штаба и <code>FR_STATE</code>;</li>
+<li>goodRun ③ Astra: <code>codex exec --sandbox danger-full-access</code> из корня репо;</li>
+<li>вкладки goodRun ④ и ⑤: <code>claude --dangerously-skip-permissions</code> из корня вашего штаба;</li>
+<li>ревью Astra: <code>codex exec</code> в detached-копии кандидата.</li>
+</ul>
+<p class="note">Worktree задаёт рабочий каталог и не ограничивает доступ к файлам. Ставьте кит на машину без живых контуров и без данных, которые нельзя терять.</p>
+
+<h3>macOS и Linux</h3>
+<pre><code>claude plugin marketplace add &lt;орг&gt;/ruki-kit
+claude plugin install ruki@ruki-kit</code></pre>
+<p><code>&lt;орг&gt;</code>: владелец репо кита на GitHub. Хуки механизма контекста подключает сам плагин, ваш <code>settings.json</code> остаётся нетронутым.</p>
+
+<h3>Windows через WSL2</h3>
+<ol>
+<li>В PowerShell администратора выполните <code>wsl --install</code>.</li>
+<li>Перезагрузите машину.</li>
+<li>Внутри WSL поставьте Claude Code, gh, zsh, node, по желанию codex и omp.</li>
+<li>Внутри WSL войдите в каждый CLI: <code>claude</code>, <code>gh auth login</code>, <code>codex login</code>.</li>
+<li>Положите штаб и репо рук в файловую систему WSL, а не под <code>/mnt/c</code>: там git работает медленно.</li>
+<li>Выполните две команды установки из блока macOS и Linux и затем <code>/ruki:setup</code>. Первая строка отчёта setup напомнит про отладку.</li>
+</ol>
+
+<h3 id="setup-check">Что делает <code>/ruki:setup</code></h3>
+<p>Скилл ведёт диалог, а работу делает скрипт <code>bin/ruki-setup</code>. Скрипт выполняет одну команду и выходит:</p>
+<dl class="cmds">
+<dt><code>ruki-setup check</code></dt>
+<dd>печатает строку на пункт и итог; код выхода 0, если все обязательные пункты на месте, иначе 1.</dd>
+<dt><code>ruki-setup install &lt;пункт&gt;</code></dt>
+<dd>ставит один пункт; программы ставит человек: скрипт печатает команду и выходит кодом 3.</dd>
+<dt><code>ruki-setup rollback &lt;пункт&gt;</code></dt>
+<dd>возвращает последнюю копию пункта байт в байт; без копии печатает «копии нет».</dd>
+</dl>
+<p>Строка отчёта <code>check</code> имеет вид <code>&lt;статус&gt; &lt;пункт&gt;: &lt;что даёт&gt;; установка: &lt;команда&gt;</code>. Статусы: <code>ok</code>, <code>нет</code> и <code>предупреждение</code>. Строка с отступом поясняет пункт над ней: пропавшее имя скилла или выключенный вход <code>$goodrun</code>. Последняя строка несёт итог.</p>
+<p>Пример отчёта в WSL на свежей машине, часть строк пропущена:</p>
+<pre><code>Сборка под Windows требует отладки: пункты в README кита, раздел «Пункты отладки»
+ok git: worktree рук, ветки, мерж; установка: sudo apt install -y git
+…
+ok orca: вкладки рук, goodRun и автопереноса; команда orca-ide; установка: поставь приложение Orca на Windows: Orca передаёт ORCA_CLI_COMMAND в WSL
+…
+предупреждение skills-matt: скиллы Матта Покока, их вызывают тексты кита; установка: ruki-setup install skills-matt
+  имя `&lt;имя&gt;` не найдено, его вызывает &lt;текст кита&gt;; переименование ломает вызов
+нет pin-file: пин автосжатия для новой сессии claude; файла ~/.claude/autocompact-pin.json нет; установка: ruki-setup install pin-file
+…
+итог: обязательных нет 3, предупреждений 1</code></pre>
+
+<h3>Как отвечать y или N</h3>
+<ul>
+<li>По каждой строке <code>нет</code> и каждой строке <code>предупреждение</code> с командой <code>ruki-setup install</code> setup задаёт один вопрос y или N.</li>
+<li>Ответ y запускает <code>ruki-setup install &lt;пункт&gt;</code>. Ответ N печатает команду установки из отчёта.</li>
+<li>Код выхода 3 значит «ставит человек»: setup печатает команду, и программу ставите вы.</li>
+<li>Каждая правка вне каталога плагина печатает строку <code>откат: ruki-setup rollback &lt;пункт&gt; (копия &lt;путь&gt;)</code>. Установщик ничего не изменил: строка «изменений нет».</li>
+<li>Предупреждения <code>hooks-double</code> и <code>slow-git</code> setup показывает без вопроса: их правите вы.</li>
+<li>Если Codex есть, setup спрашивает ещё два пункта: плагин кита в Codex и скиллы Матта Покока в Codex.</li>
+<li>В конце setup повторяет <code>check</code> и показывает итог и оставшиеся строки <code>нет</code>.</li>
+</ul>
+<p class="note">Откат любой правки: <code>ruki-setup rollback &lt;пункт&gt;</code>. Правки вне каталога плагина идут только по ответу y, копии лежат в <code>~/.config/ruki/rollback/&lt;пункт&gt;/</code>.</p>
+
+<h3 id="config">Конфиг получателя</h3>
+<p>Файл <code>~/.config/ruki/ruki.env</code> хранит строки <code>KEY=value</code> без кода. Setup спрашивает поля по одному и пишет их одной командой; строки других ключей он сохраняет.</p>
+<div class="table-wrap">
+<table class="stack">
+<thead><tr><th scope="col">Ключ</th><th scope="col">Что хранит</th><th scope="col">Кто пишет</th></tr></thead>
+<tbody>
+<tr><td><code>RUKI_HQ</code></td><td data-label="Что хранит">корень штаба получателя</td><td data-label="Кто пишет">setup, обязательно</td></tr>
+<tr><td><code>RUKI_GH_OWNER</code></td><td data-label="Что хранит">владелец репо на GitHub</td><td data-label="Кто пишет">setup, обязательно</td></tr>
+<tr><td><code>RUKI_TRACKER</code></td><td data-label="Что хранит">репо трекера в форме <code>&lt;owner&gt;/&lt;repo&gt;</code></td><td data-label="Кто пишет">setup, обязательно</td></tr>
+<tr><td><code>RUKI_PROJECT_ID</code>, <code>RUKI_STATUS_FIELD_ID</code>, <code>RUKI_STATUS_IN_PROGRESS_ID</code></td><td data-label="Что хранит">доска GitHub Projects и её статус «в работе»; без них шаги доски пропускаются</td><td data-label="Кто пишет">setup, по желанию</td></tr>
+<tr><td><code>GOODRUN_INCIDENT_EMIT</code></td><td data-label="Что хранит">программа алерта goodRun</td><td data-label="Кто пишет">setup, по желанию</td></tr>
+<tr><td><code>FR_GATE_CMD</code></td><td data-label="Что хранит">команда тестов гейта; без неё гейт останавливается строкой <code>STOP: set FR_GATE_CMD</code></td><td data-label="Кто пишет">вы, строкой в файле; нужна для волны рук</td></tr>
+<tr><td><code>FR_MAX_OPUS</code></td><td data-label="Что хранит">лимит одновременных рук полосы opus</td><td data-label="Кто пишет">вы, по желанию</td></tr>
+</tbody>
+</table>
+</div>
+<p>Значение не может содержать символы <code>`</code> <code>$</code> <code>(</code> <code>)</code> <code>;</code> <code>|</code> <code>&amp;</code> <code>&lt;</code> <code>&gt;</code>. Строка другого вида останавливает чтение: обёртка <code>ruki-run</code> называет файл и номер строки и выходит с кодом 2.</p>
+
+<h3>Обновление, удаление, установка из ZIP</h3>
+<pre><code>claude plugin update ruki@ruki-kit
+claude plugin uninstall ruki@ruki-kit</code></pre>
+<p>Во время goodRun и волны кит не обновляйте: новая вкладка грузит установленную версию, а работающая сессия остаётся на своей. После удаления конфиг получателя и пин остаются: их снимает <code>ruki-setup rollback &lt;пункт&gt;</code>.</p>
+<p>Архив ZIP подключается на одну сессию командой <code>claude --plugin-dir &lt;zip&gt;</code>. Для постоянной установки распакуйте архив и добавьте каталог локальным маркетплейсом: <code>claude plugin marketplace add &lt;каталог&gt;</code>, затем <code>claude plugin install ruki@ruki-kit</code>.</p>
+<p>Документация: <a href="https://code.claude.com/docs/en/plugins">плагины Claude Code</a>, <a href="https://developers.openai.com/codex">Codex</a>.</p>
+</section>
+
+<section id="s4">
+<h2>4. Роли и модели</h2>
+<p class="lead">Координатор ведёт волну, руки пишут код тикетов, ревьюер проверяет кандидата по риску. Модели и лимиты ниже подставлены из кода кита при экспорте.</p>
+<p><strong>Координатор</strong>: Fable (<code>/ruki:fable-ruki-agenty</code>) или Opus (<code>/ruki:opus-ruki-agenty</code>, запасной вход, когда лимит Fable исчерпан).</p>
+<h3>Полосы рук</h3>
+<p>Тег при входе выбирает полосу: без тега работает opus, тег <code>astra</code> выбирает astra, тег <code>glm</code> выбирает glm. При обоих тегах работает glm.</p>
+<div class="table-wrap">
+<table class="stack">
+<thead><tr><th scope="col">Полоса</th><th scope="col">Модель и effort</th><th scope="col">CLI</th><th scope="col">Лимит рук</th></tr></thead>
+<tbody>
+<tr><td>opus, без тега</td><td data-label="Модель и effort"><code>claude-opus-5-5</code> high</td><td data-label="CLI"><code>claude -p</code></td><td data-label="Лимит рук">3</td></tr>
+<tr><td>astra, тег <code>astra</code></td><td data-label="Модель и effort"><code>gpt-6-astra</code> medium</td><td data-label="CLI"><code>codex exec</code></td><td data-label="Лимит рук">без лимита обвязки</td></tr>
+<tr><td>glm, тег <code>glm</code></td><td data-label="Модель и effort"><code>zai/glm-5.3-flash</code>, worker-only</td><td data-label="CLI"><code>omp -p</code></td><td data-label="Лимит рук">2</td></tr>
+</tbody>
+</table>
+</div>
+<p>Потолок времени руки по умолчанию: 45m на любой полосе. Потолок конверта: 40 КБ; конверт больше потолка режет тикет до волны.</p>
+<h3>Кто ещё работает</h3>
+<ul>
+<li><strong>Ревьюер Astra high</strong>: пакетное ревью кандидата, когда риск его требует. Без риска кандидата проверяет сам координатор.</li>
+<li><strong>Запасной ревьюер</strong>: Opus по подписке через <code>REVIEWER=opus-headless</code>, когда Astra недоступна.</li>
+<li><strong>Роли goodRun</strong>: ③ Astra high ревьюит грилинг и архитектуру; ④ Fable max пишет спеку и тикеты; ⑤ координатор Fable high ведёт волну.</li>
+<li><strong>Субагент итога</strong> <code>ruki:goodrun-itog</code> собирает таблицу стадий goodRun: модели, время, попытки, токены.</li>
+</ul>
+<h3>Режим → ревьюер</h3>
+<p class="swipe">Таблица листается вбок.</p>
+<div class="table-wrap wide">
+<table>
+<thead><tr><th>Режим</th><th>Руки</th><th>Кто проверяет кандидата</th></tr></thead>
+<tbody>
+<tr><td><code>/ruki:fable-ruki-agenty</code> без тега</td><td>Opus 5.5 high</td><td>пакетное ревью Astra high, если риск его требует; иначе координатор Fable</td></tr>
+<tr><td>тег <code>astra</code></td><td>Astra medium</td><td>то же: Astra high может проверять Astra medium</td></tr>
+<tr><td>тег <code>glm</code></td><td>GLM worker-only через omp</td><td>то же</td></tr>
+<tr><td><code>/ruki:opus-ruki-agenty</code></td><td>те же полосы</td><td>пакетное ревью Astra high по риску; иначе координатор Opus 5.5 max</td></tr>
+<tr><td>Astra недоступна</td><td>те же полосы</td><td>запасной ревьюер <code>REVIEWER=opus-headless</code>: Opus по подписке, effort xhigh</td></tr>
+<tr><td>goodRun</td><td>как у координатора волны</td><td>③ Astra high ревьюит грилинг и архитектуру; ④ Fable max ревьюит, пишет спеку и тикеты; ⑤ координатор Fable high ведёт волну по строкам выше</td></tr>
+<tr><td>goodRun из Codex</td><td>как у координатора волны</td><td>③ пропущена; ④ Fable max</td></tr>
+<tr><td>прежний процесс (старые живые волны)</td><td>как при запуске волны</td><td>ревью каждой дельты другой семьёй: дифф Astra ревьюит Opus; контрольное ревью волны</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<section id="s5">
+<h2>5. Цикл волны рук</h2>
+<p class="lead"><strong>Волна</strong>: один заход конвейера рук по тикету или пакету тикетов под одним координатором. Волна кончается закрытием её тикетов.</p>
+<figure>
+<svg class="diagram" role="img" aria-labelledby="a5-t" viewBox="0 0 360 548" width="100%">
+<title id="a5-t">Цикл волны рук: координатор, конверт, рука, кандидат, ревью, гейт, мерж и живой DoD</title>
+<defs><marker id="a5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--muted)"/></marker></defs>
+<rect x="20" y="12" width="262" height="46" rx="9" fill="var(--node)" stroke="var(--node-line)" stroke-width="1.5"/>
+<circle cx="44" cy="35" r="11" fill="var(--accent)"/>
+<text x="44" y="39.5" text-anchor="middle" font-size="12" font-weight="700" fill="var(--bg)">1</text>
+<text x="64" y="31" font-size="13.5" font-weight="700" fill="currentColor">Координатор</text>
+<text x="64" y="48" font-size="12" fill="var(--muted)">выбирает процесс по риску</text>
+<rect x="20" y="76" width="262" height="46" rx="9" fill="var(--node)" stroke="var(--node-line)" stroke-width="1.5"/>
+<circle cx="44" cy="99" r="11" fill="var(--accent)"/>
+<text x="44" y="103.5" text-anchor="middle" font-size="12" font-weight="700" fill="var(--bg)">2</text>
+<text x="64" y="95" font-size="13.5" font-weight="700" fill="currentColor">Конверт</text>
+<text x="64" y="112" font-size="12" fill="var(--muted)">самодостаточное задание руке</text>
+<rect x="20" y="140" width="262" height="46" rx="9" fill="var(--node)" stroke="var(--node-line)" stroke-width="1.5"/>
+<circle cx="44" cy="163" r="11" fill="var(--accent)"/>
+<text x="44" y="167.5" text-anchor="middle" font-size="12" font-weight="700" fill="var(--bg)">3</text>
+<text x="64" y="159" font-size="13.5" font-weight="700" fill="currentColor">Рука в worktree</text>
+<text x="64" y="176" font-size="12" fill="var(--muted)">тикет в пределах потолка времени</text>
+<rect x="20" y="204" width="262" height="46" rx="9" fill="var(--node)" stroke="var(--node-line)" stroke-width="1.5"/>
+<circle cx="44" cy="227" r="11" fill="var(--accent)"/>
+<text x="44" y="231.5" text-anchor="middle" font-size="12" font-weight="700" fill="var(--bg)">4</text>
+<text x="64" y="223" font-size="13.5" font-weight="700" fill="currentColor">Кандидат</text>
+<text x="64" y="240" font-size="12" fill="var(--muted)">ветка с SHA и доклад по AC</text>
+<rect x="20" y="268" width="262" height="46" rx="9" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/>
+<circle cx="44" cy="291" r="11" fill="var(--accent)"/>
+<text x="44" y="295.5" text-anchor="middle" font-size="12" font-weight="700" fill="var(--bg)">5</text>
+<text x="64" y="287" font-size="13.5" font-weight="700" fill="currentColor">Ревью</text>
+<text x="64" y="304" font-size="12" fill="var(--muted)">Astra high или координатор</text>
+<rect x="20" y="332" width="262" height="46" rx="9" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/>
+<circle cx="44" cy="355" r="11" fill="var(--accent)"/>
+<text x="44" y="359.5" text-anchor="middle" font-size="12" font-weight="700" fill="var(--bg)">6</text>
+<text x="64" y="351" font-size="13.5" font-weight="700" fill="currentColor">Гейт</text>
+<text x="64" y="368" font-size="12" fill="var(--muted)">полный прогон итогового дерева</text>
+<rect x="20" y="396" width="262" height="46" rx="9" fill="var(--node)" stroke="var(--node-line)" stroke-width="1.5"/>
+<circle cx="44" cy="419" r="11" fill="var(--accent)"/>
+<text x="44" y="423.5" text-anchor="middle" font-size="12" font-weight="700" fill="var(--bg)">7</text>
+<text x="64" y="415" font-size="13.5" font-weight="700" fill="currentColor">Мерж</text>
+<text x="64" y="432" font-size="12" fill="var(--muted)">только после зелёного гейта</text>
+<rect x="20" y="460" width="262" height="46" rx="9" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/>
+<circle cx="44" cy="483" r="11" fill="var(--accent)"/>
+<text x="44" y="487.5" text-anchor="middle" font-size="12" font-weight="700" fill="var(--bg)">8</text>
+<text x="64" y="479" font-size="13.5" font-weight="700" fill="currentColor">Живой DoD</text>
+<text x="64" y="496" font-size="12" fill="var(--muted)">факт на работающем контуре</text>
+<path d="M151 58V75" fill="none" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#a5)"/>
+<path d="M151 122V139" fill="none" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#a5)"/>
+<path d="M151 186V203" fill="none" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#a5)"/>
+<path d="M151 250V267" fill="none" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#a5)"/>
+<path d="M151 314V331" fill="none" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#a5)"/>
+<path d="M151 378V395" fill="none" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#a5)"/>
+<path d="M151 442V459" fill="none" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#a5)"/>
+<path d="M151 506V519" fill="none" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#a5)"/>
+<text x="151" y="536" text-anchor="middle" font-size="12" fill="var(--muted)">тикеты волны закрыты</text>
+<path d="M282 291H312V163H284" fill="none" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#a5)"/>
+<text x="330" y="227" text-anchor="middle" font-size="11.5" fill="var(--muted)" transform="rotate(-90 330 227)">коррекция по блокеру</text>
+</svg>
+<figcaption>Цикл волны. Пунктир: руку на коррекцию возвращает только подтверждённый блокер.</figcaption>
+</figure>
+<ol>
+<li><strong>Вход</strong>: вы набираете <code>/ruki:fable-ruki-agenty</code> или <code>/ruki:opus-ruki-agenty</code>, тег выбирает полосу.</li>
+<li><strong>Выбор процесса</strong>: координатор соразмеряет процесс с тикетами: малую правку делает сам, остальное отдаёт рукам.</li>
+<li><strong>Конверт</strong>: цель, AC, разрешённые файлы, швы с соседними тикетами, исходный SHA, проверки и адрес результата. Рука не видит контекста координатора.</li>
+<li><strong>Рука</strong> работает в своём worktree, который создаёт Orca, и держит потолок времени.</li>
+<li><strong>Кандидат</strong>: запушенная ветка с SHA и докладом по каждому AC.</li>
+<li><strong>Пакетное ревью</strong> отдельным ревьюером, если риск его требует; иначе кандидата проверяет сам координатор.</li>
+<li><strong>Приёмка координатора</strong>: AC всех тикетов по проверкам, отчёту ревью и разбору находок.</li>
+<li><strong>Гейт</strong>: полный прогон проверок на итоговом дереве. Изменённое дерево требует нового гейта.</li>
+<li><strong>Мерж</strong> допускает только зелёный гейт на том же дереве.</li>
+<li><strong>Выкат</strong> один на волну, штатным путём контура.</li>
+<li><strong>Живой DoD</strong>: проверка на работающем контуре фактом живого состояния, а не тестом.</li>
+<li><strong>Закрытие</strong> тикетов с маркером результата.</li>
+</ol>
+</section>
+
+<section id="s6">
+<h2>6. goodRun</h2>
+<p class="lead"><code>/ruki:goodrun</code> ведёт цепочку от конца грилинга до итоговой таблицы без ручных пересадок между вкладками.</p>
+<figure>
+<svg class="diagram" role="img" aria-labelledby="a6-t" viewBox="0 0 360 424" width="100%">
+<title id="a6-t">goodRun: стадии от грилинга до итога, пауза цепочки и вход из Codex</title>
+<defs><marker id="a6" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--muted)"/></marker></defs>
+<rect x="12" y="12" width="196" height="50" rx="9" fill="var(--node)" stroke="var(--node-line)" stroke-width="1.5"/>
+<text x="110" y="33" text-anchor="middle" font-size="13.5" font-weight="700" fill="currentColor">① Грилинг</text>
+<text x="110" y="50" text-anchor="middle" font-size="12" fill="var(--muted)">вы и агент</text>
+<rect x="12" y="82" width="196" height="50" rx="9" fill="var(--node)" stroke="var(--node-line)" stroke-width="1.5"/>
+<text x="110" y="103" text-anchor="middle" font-size="13.5" font-weight="700" fill="currentColor">② Старт</text>
+<text x="110" y="120" text-anchor="middle" font-size="12" fill="var(--muted)">/ruki:goodrun</text>
+<rect x="12" y="152" width="196" height="50" rx="9" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/>
+<text x="110" y="173" text-anchor="middle" font-size="13.5" font-weight="700" fill="currentColor">③ Astra high</text>
+<text x="110" y="190" text-anchor="middle" font-size="12" fill="var(--muted)">ревью грилинга</text>
+<rect x="12" y="222" width="196" height="50" rx="9" fill="var(--node)" stroke="var(--node-line)" stroke-width="1.5"/>
+<text x="110" y="243" text-anchor="middle" font-size="13.5" font-weight="700" fill="currentColor">④ Fable max</text>
+<text x="110" y="260" text-anchor="middle" font-size="12" fill="var(--muted)">спека и тикеты</text>
+<rect x="12" y="292" width="196" height="50" rx="9" fill="var(--node)" stroke="var(--node-line)" stroke-width="1.5"/>
+<text x="110" y="313" text-anchor="middle" font-size="13.5" font-weight="700" fill="currentColor">⑤ Координатор</text>
+<text x="110" y="330" text-anchor="middle" font-size="12" fill="var(--muted)">волна рук</text>
+<rect x="12" y="362" width="196" height="50" rx="9" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/>
+<text x="110" y="383" text-anchor="middle" font-size="13.5" font-weight="700" fill="currentColor">⑥ Итог</text>
+<text x="110" y="400" text-anchor="middle" font-size="12" fill="var(--muted)">ruki:goodrun-itog</text>
+<path d="M110 62V81" fill="none" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#a6)"/>
+<path d="M110 132V151" fill="none" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#a6)"/>
+<path d="M110 202V221" fill="none" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#a6)"/>
+<path d="M110 272V291" fill="none" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#a6)"/>
+<path d="M110 342V361" fill="none" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#a6)"/>
+<rect x="232" y="144" width="116" height="66" rx="9" fill="var(--warn-bg)" stroke="var(--warn-line)" stroke-width="1.5"/>
+<text x="290" y="164" text-anchor="middle" font-size="13" font-weight="700" fill="currentColor">Пауза цепочки</text>
+<text x="290" y="182" text-anchor="middle" font-size="12" fill="var(--muted)">серия исчерпана,</text>
+<text x="290" y="199" text-anchor="middle" font-size="12" fill="var(--muted)">ждёт Enter</text>
+<path d="M208 177H230" fill="none" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#a6)"/>
+<rect x="232" y="222" width="116" height="50" rx="9" fill="var(--node)" stroke="var(--node-line)" stroke-width="1.5" stroke-dasharray="5 4"/>
+<text x="290" y="243" text-anchor="middle" font-size="13" font-weight="700" fill="currentColor">Вход из Codex</text>
+<text x="290" y="260" text-anchor="middle" font-size="12" fill="var(--muted)">$goodrun, без ③</text>
+<path d="M232 247H210" fill="none" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#a6)"/>
+</svg>
+<figcaption>goodRun: основная цепочка идёт в Claude Code; вход из Codex пропускает стадию ③.</figcaption>
+</figure>
+<ul>
+<li><strong>① Грилинг</strong>: вы и агент прорабатываете задачу до решений.</li>
+<li><strong>② Старт</strong>: <code>/ruki:goodrun</code> вырезает диалог грилинга и открывает вкладку следующей стадии.</li>
+<li><strong>③ Astra high</strong> ревьюит грилинг и архитектуру. Первая попытка идёт сразу, следующие после пауз 180, 300, 600 с. Потолок одной попытки 2700 с. Серия исчерпана: <strong>пауза цепочки</strong>, вкладка ждёт Enter, стадия ④ не стартует.</li>
+<li><strong>④ Fable max</strong> пишет спеку и тикеты по ответу Astra.</li>
+<li><strong>⑤ Координатор</strong> Fable high ведёт волну рук по тикетам.</li>
+<li><strong>⑥ Итог</strong>: субагент <code>ruki:goodrun-itog</code> собирает таблицу «стадия, модель, время, попытки, токены».</li>
+</ul>
+<p><strong>Вход из Codex</strong>: грилинг идёт в Codex, вы набираете <code>$goodrun</code>. Стадия ③ пропускается, вкладка Fable max открывается с промптом ④к.</p>
+<p>Без Codex <code>/ruki:goodrun</code> останавливается до вкладки Astra и печатает ручной путь: <code>/to-spec</code>, <code>/to-tickets</code>, <code>/ruki:fable-ruki-agenty</code>.</p>
+</section>
+
+<section id="s7">
+<h2>7. Контекст и чекпоинт</h2>
+<p class="lead">Механизм контекста держит длинную сессию в рабочем состоянии и не теряет адреса работы при сжатии. Автоматический чекпоинт здесь называется чекпоинтом перед сжатием, а весь приём называется самосжатием.</p>
+<figure>
+<svg class="diagram" role="img" aria-labelledby="a7-t" viewBox="0 0 360 504" width="100%">
+<title id="a7-t">Контекст и чекпоинт: ступени, самосжатие, потолок сжатий, автоперенос и чекпоинт по слову</title>
+<defs><marker id="a7" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--muted)"/></marker></defs>
+<rect x="40" y="12" width="182" height="46" rx="9" fill="var(--node)" stroke="var(--node-line)" stroke-width="1.5"/>
+<text x="131" y="31" text-anchor="middle" font-size="13.5" font-weight="700" fill="currentColor">Сессия работает</text>
+<text x="131" y="48" text-anchor="middle" font-size="12" fill="var(--muted)">контекст растёт</text>
+<rect x="40" y="74" width="182" height="46" rx="9" fill="var(--node)" stroke="var(--node-line)" stroke-width="1.5"/>
+<text x="131" y="93" text-anchor="middle" font-size="13.5" font-weight="700" fill="currentColor">Ступень контекста</text>
+<text x="131" y="110" text-anchor="middle" font-size="12" fill="var(--muted)">совет, а не запрет</text>
+<rect x="40" y="136" width="182" height="46" rx="9" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/>
+<text x="131" y="155" text-anchor="middle" font-size="13.5" font-weight="700" fill="currentColor">Самосжатие</text>
+<text x="131" y="172" text-anchor="middle" font-size="12" fill="var(--muted)">чекпоинт compact-ready</text>
+<rect x="40" y="198" width="182" height="46" rx="9" fill="var(--node)" stroke="var(--node-line)" stroke-width="1.5"/>
+<text x="131" y="217" text-anchor="middle" font-size="13.5" font-weight="700" fill="currentColor">Хук до сжатия</text>
+<text x="131" y="234" text-anchor="middle" font-size="12" fill="var(--muted)">проверяет готовность</text>
+<rect x="40" y="260" width="182" height="46" rx="9" fill="var(--node)" stroke="var(--node-line)" stroke-width="1.5"/>
+<text x="131" y="279" text-anchor="middle" font-size="13.5" font-weight="700" fill="currentColor">Сжатие</text>
+<text x="131" y="296" text-anchor="middle" font-size="12" fill="var(--muted)">в том же окне</text>
+<rect x="40" y="322" width="182" height="46" rx="9" fill="var(--node)" stroke="var(--node-line)" stroke-width="1.5"/>
+<text x="131" y="341" text-anchor="middle" font-size="13.5" font-weight="700" fill="currentColor">Хук после сжатия</text>
+<text x="131" y="358" text-anchor="middle" font-size="12" fill="var(--muted)">возвращает адреса работы</text>
+<rect x="40" y="384" width="182" height="46" rx="9" fill="var(--warn-bg)" stroke="var(--warn-line)" stroke-width="1.5"/>
+<text x="131" y="403" text-anchor="middle" font-size="13.5" font-weight="700" fill="currentColor">Потолок сжатий?</text>
+<text x="131" y="420" text-anchor="middle" font-size="12" fill="var(--muted)">счёт сжатий сессии</text>
+<rect x="40" y="446" width="182" height="46" rx="9" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/>
+<text x="131" y="465" text-anchor="middle" font-size="13.5" font-weight="700" fill="currentColor">Автоперенос</text>
+<text x="131" y="482" text-anchor="middle" font-size="12" fill="var(--muted)">новое окно, один раз</text>
+<path d="M131 58V73" fill="none" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#a7)"/>
+<path d="M131 120V135" fill="none" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#a7)"/>
+<path d="M131 182V197" fill="none" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#a7)"/>
+<path d="M131 244V259" fill="none" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#a7)"/>
+<path d="M131 306V321" fill="none" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#a7)"/>
+<path d="M131 368V383" fill="none" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#a7)"/>
+<path d="M131 430V445" fill="none" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#a7)"/>
+<text x="139" y="442" font-size="11.5" fill="var(--muted)">да</text>
+<path d="M40 407H24V35H38" fill="none" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#a7)"/>
+<text x="13" y="221" text-anchor="middle" font-size="11.5" fill="var(--muted)" transform="rotate(-90 13 221)">нет: работа идёт дальше</text>
+<rect x="236" y="74" width="116" height="46" rx="9" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/>
+<text x="294" y="93" text-anchor="middle" font-size="13" font-weight="700" fill="currentColor">Чекпоинт</text>
+<text x="294" y="110" text-anchor="middle" font-size="12" fill="var(--muted)">по вашему слову</text>
+<rect x="236" y="198" width="116" height="46" rx="9" fill="var(--node)" stroke="var(--node-line)" stroke-width="1.5"/>
+<text x="294" y="217" text-anchor="middle" font-size="13" font-weight="700" fill="currentColor">Хэндофф</text>
+<text x="294" y="234" text-anchor="middle" font-size="12" fill="var(--muted)">в .handoff/</text>
+<rect x="236" y="322" width="116" height="62" rx="9" fill="var(--node)" stroke="var(--node-line)" stroke-width="1.5"/>
+<text x="294" y="341" text-anchor="middle" font-size="13" font-weight="700" fill="currentColor">Новая сессия</text>
+<text x="294" y="358" text-anchor="middle" font-size="12" fill="var(--muted)">«Продолжаем</text>
+<text x="294" y="374" text-anchor="middle" font-size="12" fill="var(--muted)">чекпоинт»</text>
+<path d="M294 120V197" fill="none" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#a7)"/>
+<path d="M294 244V321" fill="none" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#a7)"/>
+</svg>
+<figcaption>Слева самосжатие и автоперенос, справа чекпоинт по слову.</figcaption>
+</figure>
+<h3 id="self-compact">Самосжатие</h3>
+<ul>
+<li><strong>Ступени контекста</strong> 280000, 330000, 380000 токенов: хук <code>hooks/hq-context-pause.py</code> советует довести текущий этап до законченного результата. Совет, а не запрет: ход не блокируется.</li>
+<li><strong>Чекпоинт перед сжатием</strong>: команда <code>scripts/compact-ready.py</code> пишет файл состояния сессии (сделано, следующий шаг, открытые вопросы, адреса) и разрешает сжатие в том же окне. Руки при этом могут работать: их ветки, SHA и pid идут в файл состояния.</li>
+<li><strong>Хук до сжатия</strong> пропускает сжатие только по свежему чекпоинту: цикл совпадает, файл не менялся. Без чекпоинта сжатие откладывается до следующего запроса.</li>
+<li><strong>Хук после сжатия</strong> дописывает адреса в файл состояния. Сессия читает файл и продолжает ту же задачу.</li>
+<li><strong>Пин автосжатия</strong>: функция <code>claude</code> в профиле шелла ставит окно автосжатия 313000 токенов. Пин действует в новой сессии, запущенной командой <code>claude</code>.</li>
+</ul>
+<h3>Потолок сжатий и автоперенос</h3>
+<p>Потолок сжатий: 4 на сессию. После потолка сессия пишет чекпоинт остановки: хэндофф в <code>.handoff/</code>, комментарий в Issue и промпт продолжения. Затем идёт <strong>автоперенос</strong>: скрипт <code>scripts/session-respawn.py</code> поднимает сессию-продолжение той же моделью и с тем же effort и гасит сессию-родителя. Автоперенос идёт один раз на цепочку; дальше решаете вы.</p>
+<h3 id="word-checkpoint">Чекпоинт по слову</h3>
+<ul>
+<li>Слово «чекпоинт» или команда <code>/ruki:checkpoint</code> готовит перенос работы в новое окно: доставка работы, хэндофф в <code>.handoff/</code> репо сессии, комментарий в Issue и промпт продолжения в чат.</li>
+<li>Слова «завершаем сессию» закрывают работу: доставка, запись в Issue и промпт в чат, хэндоффа нет.</li>
+<li>Новое окно по слову само не открывается. Откройте сессию и начните её словами «Продолжаем чекпоинт»: хук <code>hq-checkpoint</code> найдёт хэндофф и погасит его.</li>
+<li>Чекпоинт по слову требует точку чекпоинта: работа доставлена, ничего не в полёте. Протокол целиком лежит в <code>docs/agents/session-end.md</code>.</li>
+</ul>
+</section>
+
+<section id="s8">
+<h2>8. Конвейер Матта Покока</h2>
+<p class="lead">Кит даёт шесть команд, агента итога и вход из Codex. Скиллы Матта Покока ведут работу от грилинга до тикетов, а руки кита берут тикеты в работу.</p>
+<h3>Скиллы кита</h3>
+<div class="table-wrap">
+<table class="stack">
+<thead><tr><th scope="col">Команда</th><th scope="col">Что делает</th><th scope="col">Когда звать</th></tr></thead>
+<tbody>
+<tr><td><code>/ruki:fable-ruki-agenty</code></td><td data-label="Что делает">координатор Fable ведёт волну рук: процесс, конверты, приёмка, гейт, мерж</td><td data-label="Когда звать">тикеты готовы, код пишут руки; теги <code>astra</code> и <code>glm</code> выбирают полосу</td></tr>
+<tr><td><code>/ruki:opus-ruki-agenty</code></td><td data-label="Что делает">та же волна с координатором Opus max</td><td data-label="Когда звать">лимит Fable исчерпан</td></tr>
+<tr><td><code>/ruki:goodrun</code></td><td data-label="Что делает">цепочка после грилинга: ③ ревью Astra, ④ спека и тикеты, ⑤ волна рук, ⑥ итог</td><td data-label="Когда звать">грилинг закончен, решения приняты</td></tr>
+<tr><td><code>$goodrun</code> в Codex</td><td data-label="Что делает">тот же goodRun без стадии ③: вкладка Fable max открывается сразу</td><td data-label="Когда звать">грилинг шёл в Codex</td></tr>
+<tr><td><code>/ruki:checkpoint</code></td><td data-label="Что делает">чекпоинт по слову: доставка, хэндофф, промпт продолжения</td><td data-label="Когда звать">работу пора перенести в новое окно</td></tr>
+<tr><td><code>/ruki:token-cost</code></td><td data-label="Что делает">токены сессии или лога с учётом кэша: логи Claude Code, Codex и omp</td><td data-label="Когда звать">нужна цена сессии или прогона</td></tr>
+<tr><td><code>/ruki:setup</code></td><td data-label="Что делает">проверка сборки, установка по y или N, конфиг получателя, строки отката</td><td data-label="Когда звать">при установке и для повторной проверки сборки</td></tr>
+<tr><td>агент <code>ruki:goodrun-itog</code></td><td data-label="Что делает">таблица стадий goodRun: модели, время, попытки, токены</td><td data-label="Когда звать">его зовёт координатор в конце goodRun</td></tr>
+</tbody>
+</table>
+</div>
+<p>Команды волны, goodRun, чекпоинта и setup зовёте вы: модель сама их не запускает.</p>
+<h3>Какой скилл на какую задачу</h3>
+<p>Хук конвейера на старте сессии в код-репо один раз предлагает ветку по проверяемому признаку задачи. Процессом рулит человек: хук предлагает, а не запускает.</p>
+<figure>
+<svg class="diagram" role="img" aria-labelledby="a8-t" viewBox="0 0 360 632" width="100%">
+<title id="a8-t">Конвейер Матта Покока: какой скилл на какую задачу, порядок конвейера и место goodRun</title>
+<defs><marker id="a8" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--muted)"/></marker></defs>
+<rect x="12" y="12" width="336" height="46" rx="9" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/>
+<text x="180" y="31" text-anchor="middle" font-size="13.5" font-weight="700" fill="currentColor">Хук конвейера на старте сессии</text>
+<text x="180" y="48" text-anchor="middle" font-size="12" fill="var(--muted)">в код-репо предлагает ветку один раз</text>
+<path d="M180 58V71" fill="none" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#a8)"/>
+<rect x="12" y="76" width="180" height="44" rx="9" fill="var(--node)" stroke="var(--node-line)" stroke-width="1.5"/>
+<text x="102" y="94" text-anchor="middle" font-size="12.5" fill="currentColor">Нельзя назвать файлы</text>
+<text x="102" y="110" text-anchor="middle" font-size="12.5" fill="currentColor">и признак готовности</text>
+<rect x="208" y="76" width="140" height="44" rx="9" fill="var(--surface-2)" stroke="var(--node-line)" stroke-width="1.5"/>
+<text x="278" y="94" text-anchor="middle" font-size="12.5" font-weight="700" fill="currentColor">/grill-me</text>
+<text x="278" y="110" text-anchor="middle" font-size="12.5" font-weight="700" fill="currentColor">/grill-with-docs</text>
+<path d="M192 98H206" fill="none" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#a8)"/>
+<rect x="12" y="128" width="180" height="44" rx="9" fill="var(--node)" stroke="var(--node-line)" stroke-width="1.5"/>
+<text x="102" y="146" text-anchor="middle" font-size="12.5" fill="currentColor">Один проверяемый</text>
+<text x="102" y="162" text-anchor="middle" font-size="12.5" fill="currentColor">результат</text>
+<rect x="208" y="128" width="140" height="44" rx="9" fill="var(--surface-2)" stroke="var(--node-line)" stroke-width="1.5"/>
+<text x="278" y="146" text-anchor="middle" font-size="12.5" font-weight="700" fill="currentColor">один issue</text>
+<text x="278" y="162" text-anchor="middle" font-size="12" fill="var(--muted)">без спеки</text>
+<path d="M192 150H206" fill="none" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#a8)"/>
+<rect x="12" y="180" width="180" height="44" rx="9" fill="var(--node)" stroke="var(--node-line)" stroke-width="1.5"/>
+<text x="102" y="198" text-anchor="middle" font-size="12.5" fill="currentColor">Два результата и больше</text>
+<text x="102" y="214" text-anchor="middle" font-size="12.5" fill="currentColor">или смена контракта</text>
+<rect x="208" y="180" width="140" height="44" rx="9" fill="var(--surface-2)" stroke="var(--node-line)" stroke-width="1.5"/>
+<text x="278" y="198" text-anchor="middle" font-size="12.5" font-weight="700" fill="currentColor">/to-spec</text>
+<text x="278" y="214" text-anchor="middle" font-size="12" fill="var(--muted)">затем /to-tickets</text>
+<path d="M192 202H206" fill="none" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#a8)"/>
+<rect x="12" y="232" width="180" height="44" rx="9" fill="var(--node)" stroke="var(--node-line)" stroke-width="1.5"/>
+<text x="102" y="250" text-anchor="middle" font-size="12.5" fill="currentColor">Путь к плану не виден,</text>
+<text x="102" y="266" text-anchor="middle" font-size="12.5" fill="currentColor">план больше сессии</text>
+<rect x="208" y="232" width="140" height="44" rx="9" fill="var(--surface-2)" stroke="var(--node-line)" stroke-width="1.5"/>
+<text x="278" y="250" text-anchor="middle" font-size="12.5" font-weight="700" fill="currentColor">/wayfinder</text>
+<text x="278" y="266" text-anchor="middle" font-size="12" fill="var(--muted)">карта и разведка</text>
+<path d="M192 254H206" fill="none" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#a8)"/>
+<rect x="12" y="284" width="180" height="44" rx="9" fill="var(--node)" stroke="var(--node-line)" stroke-width="1.5"/>
+<text x="102" y="302" text-anchor="middle" font-size="12.5" fill="currentColor">Баг или регресс</text>
+<text x="102" y="318" text-anchor="middle" font-size="12.5" fill="currentColor">с воспроизведением</text>
+<rect x="208" y="284" width="140" height="44" rx="9" fill="var(--surface-2)" stroke="var(--node-line)" stroke-width="1.5"/>
+<text x="278" y="310" text-anchor="middle" font-size="12.5" font-weight="700" fill="currentColor">/diagnosing-bugs</text>
+<path d="M192 306H206" fill="none" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#a8)"/>
+<rect x="12" y="336" width="180" height="44" rx="9" fill="var(--node)" stroke="var(--node-line)" stroke-width="1.5"/>
+<text x="102" y="354" text-anchor="middle" font-size="12.5" fill="currentColor">Есть исполняемый</text>
+<text x="102" y="370" text-anchor="middle" font-size="12.5" fill="currentColor">критерий приёмки</text>
+<rect x="208" y="336" width="140" height="44" rx="9" fill="var(--surface-2)" stroke="var(--node-line)" stroke-width="1.5"/>
+<text x="278" y="354" text-anchor="middle" font-size="12.5" font-weight="700" fill="currentColor">/tdd</text>
+<text x="278" y="370" text-anchor="middle" font-size="12" fill="var(--muted)">при любой ветке</text>
+<path d="M192 358H206" fill="none" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#a8)"/>
+<text x="12" y="410" font-size="12.5" font-weight="700" fill="var(--muted)">Порядок конвейера</text>
+<rect x="12" y="422" width="180" height="40" rx="9" fill="var(--node)" stroke="var(--node-line)" stroke-width="1.5"/>
+<text x="102" y="446.5" text-anchor="middle" font-size="12.5" font-weight="700" fill="currentColor">Грилинг</text>
+<rect x="12" y="474" width="180" height="40" rx="9" fill="var(--node)" stroke="var(--node-line)" stroke-width="1.5"/>
+<text x="102" y="498.5" text-anchor="middle" font-size="12.5" font-weight="700" fill="currentColor">/to-spec</text>
+<rect x="12" y="526" width="180" height="40" rx="9" fill="var(--node)" stroke="var(--node-line)" stroke-width="1.5"/>
+<text x="102" y="550.5" text-anchor="middle" font-size="12.5" font-weight="700" fill="currentColor">/to-tickets</text>
+<rect x="12" y="578" width="180" height="40" rx="9" fill="var(--node)" stroke="var(--node-line)" stroke-width="1.5"/>
+<text x="102" y="602.5" text-anchor="middle" font-size="12.5" font-weight="700" fill="currentColor">/ruki:fable-ruki-agenty</text>
+<path d="M102 462V473" fill="none" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#a8)"/>
+<path d="M102 514V525" fill="none" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#a8)"/>
+<path d="M102 566V577" fill="none" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#a8)"/>
+<path d="M198 474H206V618H198" fill="none" stroke="var(--accent)" stroke-width="2"/>
+<rect x="222" y="494" width="126" height="104" rx="9" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/>
+<text x="285" y="514" text-anchor="middle" font-size="13" font-weight="700" fill="currentColor">/ruki:goodrun</text>
+<text x="285" y="532" text-anchor="middle" font-size="12" fill="var(--muted)">после грилинга:</text>
+<text x="285" y="549" text-anchor="middle" font-size="12" fill="var(--muted)">③ ревью Astra,</text>
+<text x="285" y="566" text-anchor="middle" font-size="12" fill="var(--muted)">④ спека и тикеты,</text>
+<text x="285" y="583" text-anchor="middle" font-size="12" fill="var(--muted)">⑤ волна, ⑥ итог</text>
+<path d="M222 546H208" fill="none" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#a8)"/>
+</svg>
+<figcaption>Ветки хука конвейера, порядок конвейера и место goodRun: скобка отмечает шаги, которые goodRun ведёт сам.</figcaption>
+</figure>
+<ol>
+<li><strong>Грилинг</strong> (<code>/grill-me</code>, <code>/grill-with-docs</code>): решения по вопросам, пока нельзя назвать файлы и признак готовности.</li>
+<li><strong><code>/to-spec</code></strong>: спека в трекере, когда результатов два и больше или меняется контракт.</li>
+<li><strong><code>/to-tickets</code></strong>: тикеты по швам спеки.</li>
+<li><strong>Руки</strong>: <code>/ruki:fable-ruki-agenty</code> ведёт волну по тикетам.</li>
+</ol>
+<p>Место goodRun: после грилинга <code>/ruki:goodrun</code> заменяет ручные шаги 2…4 и добавляет ревью Astra перед спекой. Скиллам <code>/to-spec</code>, <code>/to-tickets</code> и <code>/triage</code> нужен один запуск <code>/setup-matt-pocock-skills</code> в репо и трекер с входом.</p>
+</section>
+
+<section id="s9">
+<h2>9. Словарь</h2>
+<p class="lead">Термины кита. Тот же словарь лежит в ките файлом <code>docs/glossary.md</code>.</p>
+<dl class="glossary">
+<dt>Рука</dt><dd>отдельная сессия модели, которая исполняет тикет волны в своём worktree по конверту координатора и сдаёт координатору кандидата. В речи владельца то же понятие зовётся «воркер»; в текстах штаба пишем «рука».</dd>
+<dt>Сборка</dt><dd>набор инструментов, моделей и скиллов, на котором работает конвейер рук: Orca, Claude Code, Codex, omp, скиллы Матта Покока, скиллы Orca и скиллы штаба.</dd>
+<dt>Кит рук</dt><dd>приватное репо <code>ruki-kit</code>, из которого сборку рук ставят на другую машину. Кит доставляет сборку, а работает сама сборка.</dd>
+<dt>Волна</dt><dd>один заход конвейера рук по тикету или пакету тикетов под одним координатором: конверты, руки, кандидат, приёмка координатора, гейт, мерж, выкат и живой DoD. Волна кончается закрытием её тикетов.</dd>
+<dt>Координатор</dt><dd>сессия модели, которая ведёт волну и отвечает за её результат: выбирает процесс, раздаёт тикеты рукам, принимает кандидата, вливает его и закрывает тикеты. Код тикетов пишут руки, координатор сам делает только малую правку.</dd>
+<dt>Полоса</dt><dd>маршрут, по которому волна запускает руки: модель, её CLI и лимит одновременных рук. Полосу выбирает тег при входе в режим; без тега работает полоса по умолчанию.</dd>
+<dt>Конверт</dt><dd>самодостаточное задание руке на один тикет: цель, AC, разрешённые файлы, швы с соседними тикетами, исходный SHA, проверки и адрес результата. Рука не видит контекста координатора и работает только по конверту.</dd>
+<dt>Кандидат</dt><dd>результат, сданный на проверку и ещё не влитый в ствол. Кандидат руки: запушенная ветка с SHA и докладом по каждому AC. Кандидат пакета: дерево, которое координатор собрал из ствола и веток рук.</dd>
+<dt>Пакетное ревью</dt><dd>один проход отдельного ревьюера по кандидату пакета до мержа: требования, стандарты, AC всех тикетов, стыки и затронутые риски. Его заказывают по риску; без риска кандидата проверяет сам координатор. После коррекции проверяют только дельту.</dd>
+<dt>Приёмка координатора</dt><dd>решение координатора, что кандидат пакета выполняет AC всех тикетов, по проверкам, отчёту ревью и разбору находок. Руку на коррекцию возвращает только подтверждённый блокер. Приёмка координатора идёт до гейта и не заменяет приёмку владельца.</dd>
+<dt>Гейт</dt><dd>полный прогон проверок целевого репо на итоговом дереве пакета перед мержем. Мерж допускает только зелёный гейт на том же дереве; изменённое дерево требует нового гейта.</dd>
+<dt>Живой DoD</dt><dd>проверка DoD тикета на работающем контуре после мержа и одного выката волны, фактом живого состояния, а не тестом. Для работы без выката в тикет записывают причину, по которой выкат неприменим.</dd>
+<dt>Ступень контекста</dt><dd>значение контекста сессии, на котором хук советует планировать или делать перенос. Числа ступеней задаёт хук <code>hooks/hq-context-pause.py</code>, глоссарий их не повторяет. Совет, а не запрет: ход не блокируется, вызовы не отклоняются.</dd>
+<dt>Ступень волны</dt><dd>шаг цепочки зависимых тикетов волны. Цепочка из N зависимых тикетов идёт N ступенями волны (<code>skills/fable-ruki-agenty/references/workflow.md</code>, раздел «Подготовка и исполнение», п.5). Слово «ступень» без уточнения неоднозначно: пиши «ступень волны» или «ступень контекста».</dd>
+<dt>Точка чекпоинта</dt><dd>момент, в который перенос безопасен: работа доставлена, результаты фоновых агентов собраны, нет действия A3 в ожидании <code>kk</code>, ничего не в полёте с живым состоянием. Точку выбирает модель, порог только советует.</dd>
+<dt>Чекпоинт перед сжатием</dt><dd>запись текста состояния командой <code>scripts/compact-ready.py</code>. Запись разрешает сжатие в том же окне. Точка чекпоинта для неё не нужна: руки могут работать, их адреса (ветки, SHA, pid и handle) идут в файл состояния сессии.</dd>
+<dt>Чекпоинт по слову</dt><dd>перенос работы по слову владельца по протоколу <code>docs/agents/session-end.md</code>: доставка, хэндофф, промпт продолжения. Чекпоинт по слову требует точку чекпоинта, а чекпоинт перед сжатием её не требует.</dd>
+<dt>Файл состояния сессии</dt><dd>файл <code>~/.local/state/hq-context-pause/focus/&lt;sid8&gt;.md</code>. Файл пишет чекпоинт перед сжатием (<code>compact-ready</code>), адреса после сжатия дописывает хук PostCompact, хук PreCompact сверяет его sha256 с записью готовности. Файл состояния сессии не заменяет фокус волны.</dd>
+<dt>Фокус волны</dt><dd>фокус-файл координатора волны: цель, решения, AC, модели, SHA, очередь merge, handles рук и следующий шаг. Фокус волны ведёт координатор, хуки контекста его не читают.</dd>
+<dt>Автоперенос</dt><dd>механический перенос сессии в новое окно после потолка сжатий, один раз на цепочку (чекпоинт по слову владельца его не зовёт, решение владельца 14.09.2026): скрипт <code>scripts/session-respawn.py</code> поднимает сессию-продолжение той же моделью и с тем же effort, отдаёт ей промпт из хэндоффа и гасит сессию-родителя после признака жизни продолжения.</dd>
+</dl>
+</section>
+
+<section id="s10">
+<h2>10. Сбои и как их читать</h2>
+<p class="lead">Сбой читается по журналам: у каждой части сборки свой журнал. Начинайте с отчёта <code>check</code>, затем смотрите журнал событий попытки и лог гейта.</p>
+<h3>Где смотреть</h3>
+<div class="table-wrap">
+<table class="stack">
+<thead><tr><th scope="col">Что сломалось</th><th scope="col">Куда смотреть</th><th scope="col">Что там</th></tr></thead>
+<tbody>
+<tr><td>сборка и установка</td><td data-label="Куда смотреть"><code>ruki-setup check</code></td><td data-label="Что там">строка на пункт со статусом и командой установки, итог по обязательным пунктам</td></tr>
+<tr><td>рука</td><td data-label="Куда смотреть">каталог попытки <code>$FR_STATE/&lt;волна&gt;/&lt;тикет&gt;/&lt;попытка&gt;/</code>: <code>events.jsonl</code>, <code>hand.log</code>, <code>hand.err</code></td><td data-label="Что там">одна JSON-строка на событие: время, событие, SHA, модель, effort, детали; лог и ошибки CLI руки</td></tr>
+<tr><td>время и модели волны</td><td data-label="Куда смотреть"><code>scripts/fable-ruki/timing.sh</code></td><td data-label="Что там">строка на попытку: модель и effort, время руки, push, ревью, гейт, мерж</td></tr>
+<tr><td>гейт</td><td data-label="Куда смотреть"><code>$FR_STATE/hands/gate-N.log</code> и <code>gate-N.result</code></td><td data-label="Что там">полный вывод тестов гейта на итоговом дереве; ссылка ведёт на последний прогон</td></tr>
+<tr><td>goodRun</td><td data-label="Куда смотреть"><code>events.jsonl</code> в папке прогона goodRun</td><td data-label="Что там">стадии цепочки, модели, время, попытки Astra с кодом выхода</td></tr>
+<tr><td>механизм контекста</td><td data-label="Куда смотреть"><code>scripts/context-checkpoint-report.py</code></td><td data-label="Что там">сводка журнала сжатий: чекпоинты, блоки по причинам, переносы</td></tr>
+</tbody>
+</table>
+</div>
+<p>Событие <code>failed</code> обвязка ставит руке, которая вышла с ненулевым кодом, без доклада или по потолку времени; у потолка причина <code>max-time</code>.</p>
+<h3>Журнал сбоев</h3>
+<p>Журнал сбоев лежит в скилле <code>fable-ruki-agenty</code> кита: <code>skills/fable-ruki-agenty/references/incidents.md</code>. Каждая запись несёт три части: событие → причина → правка или тикет. Новые записи идут сверху. Волна без сбоев пишет строку «сбоев нет» с датой.</p>
+<h3>Уроки по симптомам</h3>
+<p>Форма урока: симптом, причина, что делать.</p>
+<ol class="lessons">
+<li><strong>Рука вышла с кодом 0, а доклада нет</strong><span class="why">Модель закончила ход последним сообщением и файл доклада не записала.</span><span class="fix">Соберите доклад по последнему сообщению руки из её лога; руку не перезапускайте.</span></li>
+<li><strong>Лаунчер отказал: конверт больше потолка</strong><span class="why">Конверт разросся на доработке, подстановка плейсхолдеров добавила байты.</span><span class="fix">Проверьте размер готового конверта через <code>wc -c</code> до запуска; конверт больше потолка из раздела 4 режьте до волны.</span></li>
+<li><strong>Рука снята потолком времени без коммита</strong><span class="why">Тикет крупнее потолка или хост под нагрузкой.</span><span class="fix">Поднимите потолок на запуск этого тикета или разрежьте тикет: код с тестами отдельно от мутаций и документации.</span></li>
+<li><strong>Мутации шва стёрли работу руки</strong><span class="why"><code>git checkout --</code> прошёл до коммита.</span><span class="fix">Мутации запускайте только после коммита и push.</span></li>
+<li><strong>Гейт красный на тесте вне диффа</strong><span class="why">Чужой коммит ствола, порядок тестов или нагрузка хоста.</span><span class="fix">Прогоните тот же тест на стволе и в изоляции до любой правки кода.</span></li>
+<li><strong>Гейт красный на проверке времени</strong><span class="why">Хост под нагрузкой, тест мерит wall-clock.</span><span class="fix">Сверьте load с числом ядер и повторите тест в изоляции; пропуск гейта без такого повтора не используйте.</span></li>
+<li><strong>Мерж отказал: дерево не совпадает с деревом гейта</strong><span class="why">Ствол ушёл вперёд, пока шёл гейт, в стволе работает другая сессия.</span><span class="fix">Запускайте гейт и мерж одной цепочкой <code>gate-merge-loop.sh</code> сразу после зелёного ревью.</span></li>
+<li><strong>Фоновая задача гейта пропала без итога</strong><span class="why">Харнесс убивает фоновые задачи при нехватке памяти хоста.</span><span class="fix">Длинные стадии запускайте под <code>nohup</code>, фоновой задаче оставляйте лёгкий ожидатель маркера.</span></li>
+<li><strong>Ожидатель руки сработал сразу после запуска</strong><span class="why">Он поймал событие прошлой попытки или промежуточный push кандидата.</span><span class="fix">Конец руки ждите по pid-файлу текущей попытки.</span></li>
+<li><strong>Ратчет красный после мержа ствола в ветку</strong><span class="why">Чужой коммит добавил функции без подъёма потолка, или разрешение конфликта чужой стороной потеряло функции ветки.</span><span class="fix">Перемеряйте ратчет после каждого мержа ствола, конфликт ратчета сводите руками.</span></li>
+<li><strong>Тесты упали после нового аргумента функции</strong><span class="why">Заглушки тестов не принимают новый именованный аргумент.</span><span class="fix">Сохраните прежнюю форму вызова и до гейта найдите все заглушки этой функции через <code>rg</code>.</span></li>
+<li><strong>Старые тесты упали после смены DoD</strong><span class="why">Тесты держат прежнее ожидание.</span><span class="fix">Найдите старое значение по всем тестам через <code>rg</code> и включите эти файлы в узкий прогон.</span></li>
+<li><strong>Проба ревьюера красная</strong><span class="why">Проба работает на своей заглушке, а не на настоящем писателе.</span><span class="fix">Сверьте пробу тестом с настоящим писателем до доработки.</span></li>
+<li><strong>Находку закрыли, а соседний вход сломан</strong><span class="why">Правка одного входа функции не покрывает другие входы того же множества.</span><span class="fix">Проверьте соседние входы и края условия.</span></li>
+<li><strong>Третий круг ревью по одному шву</strong><span class="why">Тикет держит обязательство между двумя хранилищами без общей транзакции.</span><span class="fix">Остановите круг, вынесите шов отдельным тикетом; дальше решает владелец.</span></li>
+<li><strong>Вердикт прогона противоречит факту</strong><span class="why">Вердикт снят по словам вывода, а слово failed есть и в xfailed.</span><span class="fix">Снимайте вердикт по коду выхода.</span></li>
+<li><strong>Живой DoD: ноль ошибок, а работа не видна</strong><span class="why">Ноль без события ничего не доказывает.</span><span class="fix">Дождитесь события, которое должно было случиться, и запишите его улику.</span></li>
+<li><strong>Ревьюер отвечает 401</strong><span class="why">Сломан общий токен входа или лёг маршрут провайдера.</span><span class="fix">Модели не перебирайте: переключите ревьюера на <code>REVIEWER=opus-headless</code> и повторите позже.</span></li>
+<li><strong>В конверте испорчены общие обозначения</strong><span class="why">Лаунчер заменяет все вхождения своих плейсхолдеров.</span><span class="fix">Для общих обозначений в тексте конверта берите другие имена.</span></li>
+<li><strong>«Опции нет» по выводу <code>--help</code></strong><span class="why">Вывод обрезан через <code>head</code>.</span><span class="fix">Проверяйте источник полным проходом.</span></li>
+</ol>
+</section>
+</main>
+
+<footer>
+<p>Числа сборки на этой странице подставлены из кода кита при экспорте: модели, лимиты, ступени контекста, пин и паузы goodRun. Страница работает без сети и следует светлой и тёмной теме системы.</p>
+</footer>
+</div>
+</body>
+</html>
